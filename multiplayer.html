@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Multiplayer</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: white;
+    text-align: center;
+}
+
+canvas {
+    display: block;
+    margin: 20px auto;
+    background: #111;
+    border-radius: 10px;
+}
+
+h1 { margin-top: 10px; }
+
+#score {
+    font-size: 18px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🐍 Multiplayer Snake</h1>
+<canvas id="game" width="400" height="400"></canvas>
+<div id="score">P1: 0 | P2: 0</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const box = 20;
+
+let snake1, snake2, dir1, dir2, food, score1, score2, game;
+
+function init() {
+    snake1 = [{x: 200, y: 200}];
+    snake2 = [{x: 100, y: 100}];
+
+    dir1 = "RIGHT";
+    dir2 = "RIGHT";
+
+    score1 = 0;
+    score2 = 0;
+
+    food = spawnFood();
+
+    clearInterval(game);
+    game = setInterval(draw, 120);
+}
+
+function spawnFood() {
+    return {
+        x: Math.floor(Math.random()*20)*box,
+        y: Math.floor(Math.random()*20)*box
+    };
+}
+
+// CONTROLS
+document.addEventListener("keydown", e => {
+    // Player 1
+    if (e.key === "ArrowLeft" && dir1 !== "RIGHT") dir1 = "LEFT";
+    if (e.key === "ArrowRight" && dir1 !== "LEFT") dir1 = "RIGHT";
+    if (e.key === "ArrowUp" && dir1 !== "DOWN") dir1 = "UP";
+    if (e.key === "ArrowDown" && dir1 !== "UP") dir1 = "DOWN";
+
+    // Player 2
+    if (e.key === "a" && dir2 !== "RIGHT") dir2 = "LEFT";
+    if (e.key === "d" && dir2 !== "LEFT") dir2 = "RIGHT";
+    if (e.key === "w" && dir2 !== "DOWN") dir2 = "UP";
+    if (e.key === "s" && dir2 !== "UP") dir2 = "DOWN";
+});
+
+function drawSnake(snake, colorHead, colorBody) {
+    snake.forEach((s,i)=>{
+        ctx.fillStyle = i===0 ? colorHead : colorBody;
+        ctx.fillRect(s.x, s.y, box, box);
+    });
+}
+
+function moveSnake(snake, dir, isPlayer1) {
+    let head = {...snake[0]};
+
+    if (dir==="LEFT") head.x -= box;
+    if (dir==="RIGHT") head.x += box;
+    if (dir==="UP") head.y -= box;
+    if (dir==="DOWN") head.y += box;
+
+    // Eat
+    if (head.x===food.x && head.y===food.y) {
+        if (isPlayer1) score1++;
+        else score2++;
+        food = spawnFood();
+    } else {
+        snake.pop();
+    }
+
+    // Collision
+    if (
+        head.x<0 || head.y<0 || head.x>=400 || head.y>=400 ||
+        snake.some(s=>s.x===head.x && s.y===head.y)
+    ) {
+        clearInterval(game);
+        alert((isPlayer1 ? "Player 1" : "Player 2") + " lost!");
+    }
+
+    snake.unshift(head);
+}
+
+function draw() {
+    ctx.fillStyle = "#111";
+    ctx.fillRect(0,0,400,400);
+
+    // Food
+    ctx.fillStyle = "#00ff99";
+    ctx.fillRect(food.x, food.y, box, box);
+
+    moveSnake(snake1, dir1, true);
+    moveSnake(snake2, dir2, false);
+
+    drawSnake(snake1, "#ff1493", "#ff69b4");
+    drawSnake(snake2, "#00ccff", "#66e0ff");
+
+    document.getElementById("score").innerText =
+        "P1: " + score1 + " | P2: " + score2;
+}
+
+init();
+</script>
+
+</body>
+</html>
